@@ -59,11 +59,12 @@ const TIMETABLE = [
   { time: "21:30", name: "CLOSE", role: "", accent: false },
 ];
 
-const VOTE_OPTIONS = [
-  "House / Tech House",
-  "Disco / Funk",
-  "Hip-Hop / R&B",
-  "Electronic / Synth",
+// ⑤ Battle participants — update names before the event
+const BATTLE_PARTICIPANTS = [
+  "PLAYER A",
+  "PLAYER B",
+  "PLAYER C",
+  "PLAYER D",
 ];
 
 const NOTES_LIST = [
@@ -412,12 +413,12 @@ const Page2 = memo(function Page2({
           ))}
         </div>
 
-        {/* Footer */}
+        {/* ④ Footer — same as P4 */}
         <div style={{ paddingTop: 20, paddingBottom: 28 }}>
-          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 12 }} />
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.18em", color: "rgba(109,228,245,0.35)" }}>Hundred 7, Akihabara</span>
-            <span style={{ fontFamily: COND, fontWeight: 800, fontSize: 18, color: "rgba(214,230,242,0.2)", letterSpacing: "-0.01em" }}>Nú</span>
+          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 14 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 26, color: "rgba(214,230,242,0.25)", letterSpacing: "-0.01em" }}>Nú</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.3)" }}>presented by Niyang</div>
           </div>
         </div>
 
@@ -426,20 +427,29 @@ const Page2 = memo(function Page2({
   );
 });
 
-// ── Page 3: Voting feed ────────────────────────────────────────────────────
+// ── Page 3: Battle vote ────────────────────────────────────────────────────
 const Page3 = memo(function Page3({
   onRef,
 }: {
   onRef: (el: HTMLDivElement | null) => void;
 }) {
-  const [votes, setVotes] = useState([0, 0, 0, 0]);
-  const [voted, setVoted] = useState<number | null>(null);
-  const total = votes.reduce((a, b) => a + b, 0);
+  // ③ selected = highlighted (changeable), confirmed = locked in
+  const [selected, setSelected] = useState<number | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
-  const handleVote = (i: number) => {
-    if (voted !== null) return;
-    setVoted(i);
-    setVotes((prev) => prev.map((v, idx) => (idx === i ? v + 1 : v)));
+  const handleSelect = (i: number) => {
+    if (confirmed) return;
+    setSelected(i);
+  };
+
+  const handleConfirm = () => {
+    if (selected === null) return;
+    setConfirmed(true);
+    // TODO ①: send vote to Supabase here — e.g. supabase.from("votes").insert(...)
+  };
+
+  const handleChange = () => {
+    setConfirmed(false);
   };
 
   return (
@@ -449,78 +459,109 @@ const Page3 = memo(function Page3({
         {/* Header */}
         <div style={{ paddingTop: 44, paddingBottom: 28 }}>
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 6 }}>
-            Nú Vol.1 — Interactive
+            Nú Vol.1 — Battle Vote
           </div>
           <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 42, color: FG, letterSpacing: "-0.02em", lineHeight: 1 }}>
-            YOUR VOTE
+            WHO WON?
           </div>
           <div style={{ marginTop: 10, width: 36, height: 0.5, background: CYAN, opacity: 0.5 }} />
-          <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "rgba(214,230,242,0.55)", lineHeight: 1.65 }}>
-            {voted === null
-              ? "Which genre would you most like to hear tonight?"
-              : `Voted: ${VOTE_OPTIONS[voted]}`}
+          <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "rgba(214,230,242,0.5)", lineHeight: 1.65 }}>
+            {confirmed
+              ? `Your vote: ${BATTLE_PARTICIPANTS[selected!]}`
+              : selected !== null
+              ? "Tap CONFIRM to lock in your vote, or tap another to change."
+              : "Who do you think won the battle?"}
           </div>
         </div>
 
-        {/* Options */}
+        {/* ② Options — no results shown, only selection state */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-          {VOTE_OPTIONS.map((opt, i) => {
-            const pct = total > 0 ? Math.round((votes[i] / total) * 100) : 0;
-            const isVoted = voted === i;
+          {BATTLE_PARTICIPANTS.map((name, i) => {
+            const isSel = selected === i;
             return (
               <button
                 key={i}
-                onClick={() => handleVote(i)}
-                disabled={voted !== null}
+                onClick={() => handleSelect(i)}
+                disabled={confirmed}
                 style={{
-                  position: "relative",
-                  background: "transparent",
-                  border: `0.5px solid ${isVoted ? CYAN : "rgba(109,228,245,0.15)"}`,
+                  background: isSel ? "rgba(109,228,245,0.07)" : "transparent",
+                  border: `0.5px solid ${isSel ? CYAN : "rgba(109,228,245,0.15)"}`,
                   borderRadius: 2,
                   padding: "15px 16px",
-                  cursor: voted === null ? "pointer" : "default",
+                  cursor: confirmed ? "default" : "pointer",
                   textAlign: "left",
-                  overflow: "hidden",
-                  transition: "border-color 0.4s",
+                  transition: "border-color 0.25s, background 0.25s",
                   WebkitTapHighlightColor: "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                {/* Animated fill bar */}
-                {voted !== null && (
-                  <div style={{
-                    position: "absolute", left: 0, top: 0,
-                    width: `${pct}%`, height: "100%",
-                    background: isVoted ? "rgba(109,228,245,0.10)" : "rgba(109,228,245,0.04)",
-                    transition: "width 0.9s cubic-bezier(0.16,1,0.3,1)",
-                  }} />
+                <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: isSel ? CYAN : "rgba(214,230,242,0.65)", textTransform: "uppercase" }}>
+                  {name}
+                </span>
+                {/* Checkmark when selected */}
+                {isSel && (
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: CYAN, opacity: 0.8 }}>✓</span>
                 )}
-                <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: isVoted ? CYAN : "rgba(214,230,242,0.7)", textTransform: "uppercase" }}>
-                    {opt}
-                  </span>
-                  {voted !== null && (
-                    <span style={{ fontFamily: COND, fontWeight: 700, fontSize: 17, color: isVoted ? CYAN : "rgba(214,230,242,0.35)", letterSpacing: "-0.01em" }}>
-                      {pct}%
-                    </span>
-                  )}
-                </div>
               </button>
             );
           })}
         </div>
 
-        {voted !== null && (
-          <div style={{ paddingTop: 14, fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.35)" }}>
-            {total} vote{total !== 1 ? "s" : ""} cast
-          </div>
-        )}
+        {/* Action area */}
+        <div style={{ paddingTop: 16, paddingBottom: 4 }}>
+          {!confirmed && selected !== null && (
+            <button
+              onClick={handleConfirm}
+              style={{
+                width: "100%",
+                background: CYAN,
+                border: "none",
+                borderRadius: 2,
+                padding: "13px 16px",
+                cursor: "pointer",
+                fontFamily: MONO,
+                fontSize: 10,
+                letterSpacing: "0.3em",
+                color: BG,
+                textTransform: "uppercase",
+                fontWeight: 600,
+                WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              Confirm Vote
+            </button>
+          )}
+          {confirmed && (
+            <button
+              onClick={handleChange}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "0.5px solid rgba(109,228,245,0.2)",
+                borderRadius: 2,
+                padding: "12px 16px",
+                cursor: "pointer",
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: "0.25em",
+                color: "rgba(109,228,245,0.45)",
+                textTransform: "uppercase",
+                WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              Change Vote
+            </button>
+          )}
+        </div>
 
-        {/* Footer */}
-        <div style={{ paddingTop: 16, paddingBottom: 28 }}>
-          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 12 }} />
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.18em", color: "rgba(109,228,245,0.35)" }}>Hundred 7, Akihabara</span>
-            <span style={{ fontFamily: COND, fontWeight: 800, fontSize: 18, color: "rgba(214,230,242,0.2)", letterSpacing: "-0.01em" }}>Nú</span>
+        {/* ④ Footer — same as P4 */}
+        <div style={{ paddingTop: 12, paddingBottom: 28 }}>
+          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 14 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 26, color: "rgba(214,230,242,0.25)", letterSpacing: "-0.01em" }}>Nú</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.3)" }}>presented by Niyang</div>
           </div>
         </div>
 
