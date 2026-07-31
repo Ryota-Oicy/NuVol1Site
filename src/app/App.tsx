@@ -628,6 +628,8 @@ const Page4 = memo(function Page4({
 
 // ── Root ───────────────────────────────────────────────────────────────────
 export default function App() {
+  // Declare Japanese so browsers don't offer auto-translation
+  useEffect(() => { document.documentElement.lang = "ja"; }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
   const [activePage, setActivePage] = useState(0);
