@@ -51,13 +51,26 @@ const CORNERS: [number, number, number, number][] = [
 ];
 
 const TIMETABLE = [
-  { time: "17:30", name: "DOORS OPEN", role: "", accent: false },
-  { time: "18:00", name: "DJ TBA", role: "Opening Set", accent: false },
-  { time: "19:00", name: "DJ TBA", role: "Main Set", accent: true },
-  { time: "20:00", name: "DJ TBA", role: "Main Set", accent: true },
-  { time: "21:00", name: "DJ TBA", role: "Closing Set", accent: false },
-  { time: "21:30", name: "CLOSE", role: "", accent: false },
+  { time: "17:30", name: "DOORS OPEN", role: "" },
+  { time: "18:00", name: "Explanation / 1st Showcases / Breakin' Battle", role: "-" },
+  { time: "18:45", name: "DJ TIME", role: "-" },
+  { time: "19:00", name: "2nd Showcases / All Genre Battle", role: "-" },
+  { time: "19:35", name: "DJ TIME", role: "-" },
+  { time: "20:00", name: "3rd Showcases / Final Battle", role: "-" },
+  { time: "20:50", name: "DJ TIME", role: "-" },
+  { time: "21:30", name: "CLOSE", role: "-" },
 ];
+
+function getActiveSlotIndex(): number {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const mins = TIMETABLE.map(s => { const [h, m] = s.time.split(":").map(Number); return h * 60 + m; });
+  if (cur < mins[0]) return 0;
+  if (cur >= mins[mins.length - 1]) return mins.length - 1;
+  let idx = 0;
+  for (let i = 0; i < mins.length; i++) { if (mins[i] <= cur) idx = i; }
+  return idx;
+}
 
 // ── Battle data — update battler names before the event ───────────────────
 type BattleKey = "breakin" | "allgenre" | "final";
@@ -65,13 +78,13 @@ type BattleKey = "breakin" | "allgenre" | "final";
 const BATTLES: Record<BattleKey, { title: string; subtitle: string; desc: string; battlers: string[] }> = {
   breakin: {
     title: "BREAKIN' BATTLE",
-    subtitle: "B-Boy / B-Girl",
+    subtitle: "B-Boys / B-Girls",
     desc: "Who do you think won the Breakin' Battle?",
     battlers: ["BATTLER A", "BATTLER B", "BATTLER C", "BATTLER D"],
   },
   allgenre: {
     title: "ALL GENRE BATTLE",
-    subtitle: "Street Dance",
+    subtitle: "All Dancers",
     desc: "Who do you think won the All Genre Battle?",
     battlers: ["BATTLER A", "BATTLER B", "BATTLER C", "BATTLER D"],
   },
@@ -79,34 +92,34 @@ const BATTLES: Record<BattleKey, { title: string; subtitle: string; desc: string
     title: "FINAL BATTLE",
     subtitle: "Championship",
     desc: "Who do you think won the Final Battle?",
-    battlers: ["BATTLER A", "BATTLER B"],
+    battlers: ["BATTLER A", "BATTLER B", "BATTLER C", "BATTLER D"],
   },
 };
 
 const NOTES_LIST = [
   {
     label: "ADMISSION",
-    body: "Adv. ¥2,000  /  Door ¥2,500\nOne Drink ¥500  /  Students ¥1,500",
+    body: "Adv. ¥2,000 (事前決済)\nDoor. ¥2,500 (当日支払)\nStudents ¥1,500\n+ One Drink ¥500",
   },
   {
     label: "FOOD & DRINK",
-    body: "Free food & liquor included.\nOutside food and drinks are permitted.",
+    body: "ワンドリンク用の缶以外、すべて無料！\nビールサーバーも無料！持ち込みOK！\n※においの強いものは持ち込み禁止",
   },
   {
-    label: "ALL AGES",
-    body: "Open to all ages.\nValid ID required for alcohol service.",
+    label: "VELUE RULES",
+    body: "(会場注意事項記載予定)",
   },
   {
-    label: "PHOTO",
-    body: "Personal photography is welcome.\nBe mindful of performers and guests.",
+    label: "AAAA",
+    body: "(AAAA)",
   },
   {
     label: "VENUE",
-    body: "Hundred 7 — Akihabara, Tokyo\nFollow all venue rules and staff instructions.",
+    body: "Hundred 7 — Akihabara, Tokyo\n(住所記載予定)",
   },
   {
     label: "CONTACT",
-    body: "Instagram: @sryota14\nDM or comment for inquiries.",
+    body: "Instagram: @sryota14",
   },
 ];
 
@@ -371,6 +384,11 @@ const Page2 = memo(function Page2({
 }: {
   onRef: (el: HTMLDivElement | null) => void;
 }) {
+  const [activeIdx, setActiveIdx] = useState(() => getActiveSlotIndex());
+  useEffect(() => {
+    const id = setInterval(() => setActiveIdx(getActiveSlotIndex()), 60000);
+    return () => clearInterval(id);
+  }, []);
   return (
     <div ref={onRef} style={SEC}>
       {/* Subtle static wave bg */}
@@ -401,38 +419,43 @@ const Page2 = memo(function Page2({
 
         {/* Timeline */}
         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-          {TIMETABLE.map((slot, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "stretch", gap: 16, paddingBottom: i < TIMETABLE.length - 1 ? 22 : 0 }}>
-              {/* Time */}
-              <div style={{ width: 46, flexShrink: 0, paddingTop: 1 }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "rgba(109,228,245,0.6)" }}>{slot.time}</span>
+          {TIMETABLE.map((slot, i) => {
+            const active = i === activeIdx;
+            return (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 16, paddingBottom: i < TIMETABLE.length - 1 ? 22 : 0 }}>
+              {/* Time — height 20px matches dot zone for horizontal alignment */}
+              <div style={{ width: 46, flexShrink: 0, height: 20, display: "flex", alignItems: "center" }}>
+                <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: active ? "rgba(109,228,245,0.9)" : "rgba(109,228,245,0.5)" }}>{slot.time}</span>
               </div>
               {/* Dot + connector */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 10, flexShrink: 0 }}>
-                <div style={{
-                  width: slot.accent ? 8 : 5, height: slot.accent ? 8 : 5,
-                  borderRadius: "50%",
-                  background: slot.accent ? CYAN : "rgba(109,228,245,0.3)",
-                  boxShadow: slot.accent ? `0 0 10px ${CYAN}` : "none",
-                  marginTop: 2, flexShrink: 0,
-                }} />
+                {/* 20px zone so dot center aligns with time text */}
+                <div style={{ height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{
+                    width: active ? 8 : 5, height: active ? 8 : 5,
+                    borderRadius: "50%",
+                    background: active ? CYAN : "rgba(109,228,245,0.3)",
+                    boxShadow: active ? `0 0 10px ${CYAN}` : "none",
+                  }} />
+                </div>
                 {i < TIMETABLE.length - 1 && (
-                  <div style={{ width: 0.5, flex: 1, background: "rgba(109,228,245,0.12)", marginTop: 5 }} />
+                  <div style={{ width: 0.5, flex: 1, background: "rgba(109,228,245,0.12)" }} />
                 )}
               </div>
               {/* Label */}
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <div style={{ fontFamily: COND, fontWeight: slot.accent ? 700 : 500, fontSize: slot.accent ? 19 : 16, color: slot.accent ? FG : "rgba(214,230,242,0.55)", letterSpacing: "-0.01em", lineHeight: 1 }}>
+                <div style={{ height: 20, display: "flex", alignItems: "center", fontFamily: COND, fontWeight: active ? 700 : 500, fontSize: active ? 16 : 15, color: active ? FG : "rgba(214,230,242,0.55)", letterSpacing: "-0.01em", lineHeight: 1 }}>
                   {slot.name}
                 </div>
-                {slot.role && (
+                {slot.role && slot.role !== "-" && (
                   <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.22em", color: "rgba(109,228,245,0.4)", textTransform: "uppercase" }}>
                     {slot.role}
                   </div>
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <PageFooter />
@@ -563,8 +586,8 @@ function BattleVotePage({
 
 // ── Page 3: Battle menu ────────────────────────────────────────────────────
 const BATTLE_MENU: { key: BattleKey; label: string; desc: string }[] = [
-  { key: "breakin",  label: "BREAKIN' BATTLE",   desc: "B-Boy / B-Girl" },
-  { key: "allgenre", label: "ALL GENRE BATTLE",   desc: "Street Dance" },
+  { key: "breakin",  label: "BREAKIN' BATTLE",   desc: "B-Boys / B-Girls" },
+  { key: "allgenre", label: "ALL GENRE BATTLE",   desc: "All Dancers" },
   { key: "final",    label: "FINAL BATTLE",       desc: "Championship" },
 ];
 
