@@ -351,9 +351,15 @@ const Page1 = memo(function Page1({
         </div>
       </div>
 
-      {/* Scroll hint */}
-      <div style={{ position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)", zIndex: 3, color: CYAN, opacity: 0.3, fontSize: 8, letterSpacing: "0.3em", fontFamily: MONO, textTransform: "uppercase", pointerEvents: "none" }}>
-        scroll
+      {/* Scroll indicator — bouncing arrow */}
+      <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", zIndex: 3, pointerEvents: "none" }}>
+        <div className="scroll-indicator" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, color: CYAN, fontFamily: MONO }}>
+          <span style={{ fontSize: 8, letterSpacing: "0.32em", textTransform: "uppercase", opacity: 0.7 }}>scroll</span>
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="none" style={{ opacity: 0.8 }}>
+            <line x1="6" y1="0" x2="6" y2="10" stroke={CYAN} strokeWidth="0.8"/>
+            <polyline points="2,7 6,12 10,7" stroke={CYAN} strokeWidth="0.8" fill="none"/>
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -472,14 +478,21 @@ function BattleVotePage({
     <div style={{ height: "100dvh", minHeight: "100vh", background: BG, display: "flex", flexDirection: "column" }}>
       <div className="page-inner" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
 
-        {/* Back + header */}
-        <div style={{ paddingTop: 44, paddingBottom: 28, flexShrink: 0 }}>
+        {/* Fixed top bar with back button */}
+        <div style={{ position: "sticky", top: 0, zIndex: 10, background: BG, borderBottom: "0.5px solid rgba(109,228,245,0.1)", marginLeft: -28, marginRight: -28, paddingLeft: 28, paddingRight: 28, flexShrink: 0 }}>
           <button
             onClick={onBack}
-            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: MONO, fontSize: 9, letterSpacing: "0.3em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", padding: 0, marginBottom: 20, WebkitTapHighlightColor: "transparent", display: "flex", alignItems: "center", gap: 8 }}
+            style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "none", border: "none", cursor: "pointer", padding: "14px 0", WebkitTapHighlightColor: "transparent" }}
           >
-            ← Back
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <polyline points="11,4 6,9 11,14" stroke={CYAN} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.25em", color: CYAN, textTransform: "uppercase" }}>Back</span>
           </button>
+        </div>
+
+        {/* Header */}
+        <div style={{ paddingTop: 28, paddingBottom: 28, flexShrink: 0 }}>
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 6 }}>
             {battle.subtitle}
           </div>
@@ -624,35 +637,35 @@ const Page4 = memo(function Page4({
 }) {
   return (
     <div ref={onRef} style={SEC}>
-      <div className="page-inner" style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box", overflowY: "auto" }}>
+      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box" }}>
 
-        {/* Header */}
-        <div style={{ paddingTop: 44, paddingBottom: 24, flexShrink: 0 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 6 }}>
+        {/* Header — tighter spacing */}
+        <div style={{ paddingTop: 36, paddingBottom: 14, flexShrink: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 5 }}>
             Nú Vol.1 — Info
           </div>
-          <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 42, color: FG, letterSpacing: "-0.02em", lineHeight: 1 }}>
+          <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 38, color: FG, letterSpacing: "-0.02em", lineHeight: 1 }}>
             NOTES
           </div>
-          <div style={{ marginTop: 10, width: 36, height: 0.5, background: CYAN, opacity: 0.5 }} />
+          <div style={{ marginTop: 8, width: 36, height: 0.5, background: CYAN, opacity: 0.5 }} />
         </div>
 
-        {/* Notes */}
+        {/* Notes — ② compressed spacing */}
         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
           {NOTES_LIST.map((note, i) => (
             <div key={i}>
-              <div style={{ paddingBottom: 18 }}>
-                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.35em", color: CYAN, opacity: 0.65, textTransform: "uppercase", marginBottom: 5 }}>
+              <div style={{ paddingBottom: 9 }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.35em", color: CYAN, opacity: 0.65, textTransform: "uppercase", marginBottom: 4 }}>
                   {note.label}
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: "rgba(214,230,242,0.68)", lineHeight: 1.75 }}>
+                <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.06em", color: "rgba(214,230,242,0.68)", lineHeight: 1.6 }}>
                   {note.body.split("\n").map((line, j, arr) => (
                     <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
                   ))}
                 </div>
               </div>
               {i < NOTES_LIST.length - 1 && (
-                <div style={{ height: 0.4, background: "rgba(109,228,245,0.07)", marginBottom: 18 }} />
+                <div style={{ height: 0.4, background: "rgba(109,228,245,0.07)", marginBottom: 9 }} />
               )}
             </div>
           ))}

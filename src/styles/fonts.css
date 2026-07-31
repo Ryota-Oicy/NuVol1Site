@@ -3,3 +3,10 @@
 /* Hide scrollbars inside pages while keeping scroll functionality */
 .page-inner::-webkit-scrollbar { display: none; }
 .page-inner { scrollbar-width: none; }
+
+/* P1 scroll indicator */
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0);   opacity: 0.55; }
+  50%       { transform: translateY(5px); opacity: 1;    }
+}
+.scroll-indicator { animation: scroll-bounce 2s ease-in-out infinite; }
