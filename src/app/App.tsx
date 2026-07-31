@@ -59,13 +59,29 @@ const TIMETABLE = [
   { time: "21:30", name: "CLOSE", role: "", accent: false },
 ];
 
-// ⑤ Battle participants — update names before the event
-const BATTLE_PARTICIPANTS = [
-  "PLAYER A",
-  "PLAYER B",
-  "PLAYER C",
-  "PLAYER D",
-];
+// ── Battle data — update battler names before the event ───────────────────
+type BattleKey = "breakin" | "allgenre" | "final";
+
+const BATTLES: Record<BattleKey, { title: string; subtitle: string; desc: string; battlers: string[] }> = {
+  breakin: {
+    title: "BREAKIN' BATTLE",
+    subtitle: "B-Boy / B-Girl",
+    desc: "Who do you think won the Breakin' Battle?",
+    battlers: ["BATTLER A", "BATTLER B", "BATTLER C", "BATTLER D"],
+  },
+  allgenre: {
+    title: "ALL GENRE BATTLE",
+    subtitle: "Street Dance",
+    desc: "Who do you think won the All Genre Battle?",
+    battlers: ["BATTLER A", "BATTLER B", "BATTLER C", "BATTLER D"],
+  },
+  final: {
+    title: "FINAL BATTLE",
+    subtitle: "Championship",
+    desc: "Who do you think won the Final Battle?",
+    battlers: ["BATTLER A", "BATTLER B"],
+  },
+};
 
 const NOTES_LIST = [
   {
@@ -364,10 +380,10 @@ const Page2 = memo(function Page2({
         })}
       </svg>
 
-      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box" }}>
+      <div className="page-inner" style={{ position: "relative", zIndex: 1, height: "100%", overflowY: "auto", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box" }}>
 
         {/* Header */}
-        <div style={{ paddingTop: 44, paddingBottom: 28 }}>
+        <div style={{ paddingTop: 44, paddingBottom: 28, flexShrink: 0 }}>
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 6 }}>
             Nú Vol.1 — 11.28 SAT
           </div>
@@ -413,75 +429,81 @@ const Page2 = memo(function Page2({
           ))}
         </div>
 
-        {/* ④ Footer — same as P4 */}
-        <div style={{ paddingTop: 20, paddingBottom: 28 }}>
-          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 14 }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 26, color: "rgba(214,230,242,0.25)", letterSpacing: "-0.01em" }}>Nú</div>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.3)" }}>presented by Niyang</div>
-          </div>
-        </div>
+        <PageFooter />
 
       </div>
     </div>
   );
 });
 
-// ── Page 3: Battle vote ────────────────────────────────────────────────────
-const Page3 = memo(function Page3({
-  onRef,
+// ── Shared page footer ─────────────────────────────────────────────────────
+function PageFooter() {
+  return (
+    <div style={{ paddingTop: 12, paddingBottom: 28, flexShrink: 0 }}>
+      <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 14 }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 26, color: "rgba(214,230,242,0.25)", letterSpacing: "-0.01em" }}>Nú</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.3)" }}>presented by Niyang</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Battle vote overlay page ───────────────────────────────────────────────
+function BattleVotePage({
+  battleKey,
+  voteState,
+  onSelect,
+  onConfirm,
+  onChangeVote,
+  onBack,
 }: {
-  onRef: (el: HTMLDivElement | null) => void;
+  battleKey: BattleKey;
+  voteState: { selected: number | null; confirmed: boolean };
+  onSelect: (i: number) => void;
+  onConfirm: () => void;
+  onChangeVote: () => void;
+  onBack: () => void;
 }) {
-  // ③ selected = highlighted (changeable), confirmed = locked in
-  const [selected, setSelected] = useState<number | null>(null);
-  const [confirmed, setConfirmed] = useState(false);
-
-  const handleSelect = (i: number) => {
-    if (confirmed) return;
-    setSelected(i);
-  };
-
-  const handleConfirm = () => {
-    if (selected === null) return;
-    setConfirmed(true);
-    // TODO ①: send vote to Supabase here — e.g. supabase.from("votes").insert(...)
-  };
-
-  const handleChange = () => {
-    setConfirmed(false);
-  };
+  const battle = BATTLES[battleKey];
+  const { selected, confirmed } = voteState;
 
   return (
-    <div ref={onRef} style={SEC}>
-      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box" }}>
+    <div style={{ height: "100dvh", minHeight: "100vh", background: BG, display: "flex", flexDirection: "column" }}>
+      <div className="page-inner" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
 
-        {/* Header */}
-        <div style={{ paddingTop: 44, paddingBottom: 28 }}>
+        {/* Back + header */}
+        <div style={{ paddingTop: 44, paddingBottom: 28, flexShrink: 0 }}>
+          <button
+            onClick={onBack}
+            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: MONO, fontSize: 9, letterSpacing: "0.3em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", padding: 0, marginBottom: 20, WebkitTapHighlightColor: "transparent", display: "flex", alignItems: "center", gap: 8 }}
+          >
+            ← Back
+          </button>
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 6 }}>
-            Nú Vol.1 — Battle Vote
+            {battle.subtitle}
           </div>
-          <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 42, color: FG, letterSpacing: "-0.02em", lineHeight: 1 }}>
-            WHO WON?
+          <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 36, color: FG, letterSpacing: "-0.02em", lineHeight: 1.05 }}>
+            {battle.title}
           </div>
           <div style={{ marginTop: 10, width: 36, height: 0.5, background: CYAN, opacity: 0.5 }} />
           <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "rgba(214,230,242,0.5)", lineHeight: 1.65 }}>
             {confirmed
-              ? `Your vote: ${BATTLE_PARTICIPANTS[selected!]}`
+              ? `Your vote: ${battle.battlers[selected!]}`
               : selected !== null
-              ? "Tap CONFIRM to lock in your vote, or tap another to change."
-              : "Who do you think won the battle?"}
+              ? "Tap CONFIRM to lock in, or tap another to change."
+              : battle.desc}
           </div>
         </div>
 
-        {/* ② Options — no results shown, only selection state */}
+        {/* Battler options */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-          {BATTLE_PARTICIPANTS.map((name, i) => {
+          {battle.battlers.map((name, i) => {
             const isSel = selected === i;
             return (
               <button
                 key={i}
-                onClick={() => handleSelect(i)}
+                onClick={() => !confirmed && onSelect(i)}
                 disabled={confirmed}
                 style={{
                   background: isSel ? "rgba(109,228,245,0.07)" : "transparent",
@@ -500,71 +522,95 @@ const Page3 = memo(function Page3({
                 <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: isSel ? CYAN : "rgba(214,230,242,0.65)", textTransform: "uppercase" }}>
                   {name}
                 </span>
-                {/* Checkmark when selected */}
-                {isSel && (
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: CYAN, opacity: 0.8 }}>✓</span>
-                )}
+                {isSel && <span style={{ fontFamily: MONO, fontSize: 10, color: CYAN, opacity: 0.8 }}>✓</span>}
               </button>
             );
           })}
         </div>
 
-        {/* Action area */}
-        <div style={{ paddingTop: 16, paddingBottom: 4 }}>
+        {/* Confirm / Change */}
+        <div style={{ paddingTop: 16, paddingBottom: 4, flexShrink: 0 }}>
           {!confirmed && selected !== null && (
-            <button
-              onClick={handleConfirm}
-              style={{
-                width: "100%",
-                background: CYAN,
-                border: "none",
-                borderRadius: 2,
-                padding: "13px 16px",
-                cursor: "pointer",
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: "0.3em",
-                color: BG,
-                textTransform: "uppercase",
-                fontWeight: 600,
-                WebkitTapHighlightColor: "transparent",
-              }}
-            >
+            <button onClick={onConfirm} style={{ width: "100%", background: CYAN, border: "none", borderRadius: 2, padding: "13px 16px", cursor: "pointer", fontFamily: MONO, fontSize: 10, letterSpacing: "0.3em", color: BG, textTransform: "uppercase", fontWeight: 600, WebkitTapHighlightColor: "transparent" }}>
               Confirm Vote
             </button>
           )}
           {confirmed && (
-            <button
-              onClick={handleChange}
-              style={{
-                width: "100%",
-                background: "transparent",
-                border: "0.5px solid rgba(109,228,245,0.2)",
-                borderRadius: 2,
-                padding: "12px 16px",
-                cursor: "pointer",
-                fontFamily: MONO,
-                fontSize: 9,
-                letterSpacing: "0.25em",
-                color: "rgba(109,228,245,0.45)",
-                textTransform: "uppercase",
-                WebkitTapHighlightColor: "transparent",
-              }}
-            >
+            <button onClick={onChangeVote} style={{ width: "100%", background: "transparent", border: "0.5px solid rgba(109,228,245,0.2)", borderRadius: 2, padding: "12px 16px", cursor: "pointer", fontFamily: MONO, fontSize: 9, letterSpacing: "0.25em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", WebkitTapHighlightColor: "transparent" }}>
               Change Vote
             </button>
           )}
         </div>
 
-        {/* ④ Footer — same as P4 */}
-        <div style={{ paddingTop: 12, paddingBottom: 28 }}>
-          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 14 }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 26, color: "rgba(214,230,242,0.25)", letterSpacing: "-0.01em" }}>Nú</div>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.3)" }}>presented by Niyang</div>
+        <PageFooter />
+      </div>
+    </div>
+  );
+}
+
+// ── Page 3: Battle menu ────────────────────────────────────────────────────
+const BATTLE_MENU: { key: BattleKey; label: string; desc: string }[] = [
+  { key: "breakin",  label: "BREAKIN' BATTLE",   desc: "B-Boy / B-Girl" },
+  { key: "allgenre", label: "ALL GENRE BATTLE",   desc: "Street Dance" },
+  { key: "final",    label: "FINAL BATTLE",       desc: "Championship" },
+];
+
+const Page3 = memo(function Page3({
+  onRef,
+  onEnterBattle,
+}: {
+  onRef: (el: HTMLDivElement | null) => void;
+  onEnterBattle: (key: BattleKey) => void;
+}) {
+  return (
+    <div ref={onRef} style={SEC}>
+      <div className="page-inner" style={{ position: "relative", zIndex: 1, height: "100%", overflowY: "auto", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box" }}>
+
+        <div style={{ paddingTop: 44, paddingBottom: 28, flexShrink: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.4em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 6 }}>
+            Nú Vol.1 — Battle Vote
+          </div>
+          <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 42, color: FG, letterSpacing: "-0.02em", lineHeight: 1 }}>
+            WHO WON?
+          </div>
+          <div style={{ marginTop: 10, width: 36, height: 0.5, background: CYAN, opacity: 0.5 }} />
+          <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "rgba(214,230,242,0.5)", lineHeight: 1.65 }}>
+            Select a battle to cast your vote.
           </div>
         </div>
 
+        {/* Battle buttons */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
+          {BATTLE_MENU.map(({ key, label, desc }) => (
+            <button
+              key={key}
+              onClick={() => onEnterBattle(key)}
+              style={{
+                background: "transparent",
+                border: "0.5px solid rgba(109,228,245,0.18)",
+                borderRadius: 2,
+                padding: "18px 20px",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "border-color 0.2s, background 0.2s",
+                WebkitTapHighlightColor: "transparent",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+              onPointerEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(109,228,245,0.45)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(109,228,245,0.04)"; }}
+              onPointerLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(109,228,245,0.18)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            >
+              <div>
+                <div style={{ fontFamily: COND, fontWeight: 700, fontSize: 20, color: FG, letterSpacing: "-0.01em", lineHeight: 1 }}>{label}</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.22em", color: "rgba(109,228,245,0.4)", textTransform: "uppercase", marginTop: 5 }}>{desc}</div>
+              </div>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: "rgba(109,228,245,0.35)" }}>›</span>
+            </button>
+          ))}
+        </div>
+
+        <PageFooter />
       </div>
     </div>
   );
@@ -578,7 +624,7 @@ const Page4 = memo(function Page4({
 }) {
   return (
     <div ref={onRef} style={SEC}>
-      <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box", overflowY: "auto" }}>
+      <div className="page-inner" style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", padding: "0 28px", fontFamily: MONO, maxWidth: 480, margin: "0 auto", boxSizing: "border-box", overflowY: "auto" }}>
 
         {/* Header */}
         <div style={{ paddingTop: 44, paddingBottom: 24, flexShrink: 0 }}>
@@ -612,14 +658,7 @@ const Page4 = memo(function Page4({
           ))}
         </div>
 
-        {/* Footer */}
-        <div style={{ paddingTop: 16, paddingBottom: 28, flexShrink: 0 }}>
-          <div style={{ height: 0.4, background: "rgba(109,228,245,0.1)", marginBottom: 14 }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <div style={{ fontFamily: COND, fontWeight: 800, fontSize: 26, color: "rgba(214,230,242,0.25)", letterSpacing: "-0.01em" }}>Nú</div>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(109,228,245,0.3)" }}>presented by Niyang</div>
-          </div>
-        </div>
+        <PageFooter />
 
       </div>
     </div>
@@ -628,13 +667,24 @@ const Page4 = memo(function Page4({
 
 // ── Root ───────────────────────────────────────────────────────────────────
 export default function App() {
-  // Declare Japanese so browsers don't offer auto-translation
   useEffect(() => { document.documentElement.lang = "ja"; }, []);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
   const [activePage, setActivePage] = useState(0);
 
-  // Track active page via IntersectionObserver
+  // Battle overlay state — persisted across back/forward navigation
+  const [activeBattle, setActiveBattle] = useState<BattleKey | null>(null);
+  const [voteStates, setVoteStates] = useState<Record<BattleKey, { selected: number | null; confirmed: boolean }>>({
+    breakin:  { selected: null, confirmed: false },
+    allgenre: { selected: null, confirmed: false },
+    final:    { selected: null, confirmed: false },
+  });
+
+  const handleSelect    = (key: BattleKey, i: number) => setVoteStates(s => ({ ...s, [key]: { ...s[key], selected: i } }));
+  const handleConfirm   = (key: BattleKey) => setVoteStates(s => ({ ...s, [key]: { ...s[key], confirmed: true } }));
+  const handleChangeVote = (key: BattleKey) => setVoteStates(s => ({ ...s, [key]: { ...s[key], confirmed: false } }));
+
   useEffect(() => {
     const observers = sectionRefs.current.map((el, i) => {
       if (!el) return null;
@@ -654,28 +704,30 @@ export default function App() {
   return (
     <div style={{ width: "100vw", height: "100dvh", minHeight: "100vh", overflow: "hidden", background: BG }}>
 
-      {/* Page indicator dots */}
-      <nav style={{ position: "fixed", right: 14, top: "50%", transform: "translateY(-50%)", zIndex: 100, display: "flex", flexDirection: "column", gap: 10 }}>
-        {[0, 1, 2, 3].map((i) => (
-          <button
-            key={i}
-            onClick={() => scrollToPage(i)}
-            aria-label={`Page ${i + 1}`}
-            style={{
-              width: activePage === i ? 6 : 4,
-              height: activePage === i ? 6 : 4,
-              borderRadius: "50%",
-              background: activePage === i ? CYAN : "rgba(109,228,245,0.25)",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              transition: "all 0.3s ease",
-              boxShadow: activePage === i ? `0 0 6px ${CYAN}` : "none",
-              WebkitTapHighlightColor: "transparent",
-            }}
-          />
-        ))}
-      </nav>
+      {/* Page indicator dots — hidden when battle overlay is open */}
+      {!activeBattle && (
+        <nav style={{ position: "fixed", right: 14, top: "50%", transform: "translateY(-50%)", zIndex: 100, display: "flex", flexDirection: "column", gap: 10 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <button
+              key={i}
+              onClick={() => scrollToPage(i)}
+              aria-label={`Page ${i + 1}`}
+              style={{
+                width: activePage === i ? 6 : 4,
+                height: activePage === i ? 6 : 4,
+                borderRadius: "50%",
+                background: activePage === i ? CYAN : "rgba(109,228,245,0.25)",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                transition: "all 0.3s ease",
+                boxShadow: activePage === i ? `0 0 6px ${CYAN}` : "none",
+                WebkitTapHighlightColor: "transparent",
+              }}
+            />
+          ))}
+        </nav>
+      )}
 
       {/* Scroll-snap container */}
       <div
@@ -691,8 +743,28 @@ export default function App() {
       >
         <Page1 onRef={(el) => { sectionRefs.current[0] = el; }} />
         <Page2 onRef={(el) => { sectionRefs.current[1] = el; }} />
-        <Page3 onRef={(el) => { sectionRefs.current[2] = el; }} />
+        <Page3 onRef={(el) => { sectionRefs.current[2] = el; }} onEnterBattle={setActiveBattle} />
         <Page4 onRef={(el) => { sectionRefs.current[3] = el; }} />
+      </div>
+
+      {/* Battle vote overlay — slides in from right */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        background: BG,
+        transform: activeBattle ? "translateX(0)" : "translateX(100%)",
+        transition: "transform 0.32s cubic-bezier(0.16,1,0.3,1)",
+        overflowY: "auto",
+      }}>
+        {activeBattle && (
+          <BattleVotePage
+            battleKey={activeBattle}
+            voteState={voteStates[activeBattle]}
+            onSelect={(i) => handleSelect(activeBattle, i)}
+            onConfirm={() => handleConfirm(activeBattle)}
+            onChangeVote={() => handleChangeVote(activeBattle)}
+            onBack={() => setActiveBattle(null)}
+          />
+        )}
       </div>
     </div>
   );
