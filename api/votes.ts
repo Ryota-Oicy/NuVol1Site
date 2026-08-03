@@ -8,8 +8,14 @@ const supabase = createClient(
 );
 
 export async function GET() {
+  const { data, error } = await supabase
+    .from("votes")
+    .select("*");
+
   return Response.json({
-    message: "API is working",
+    success: !error,
+    error: error?.message,
+    data,
   });
 }
 
