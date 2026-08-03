@@ -1,5 +1,23 @@
 import { memo, useEffect, useRef, useState } from "react";
 
+// ── Cookie helpers ─────────────────────────────────────────────────────────
+function getCookie(name: string): string | null {
+  const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function setCookie(name: string, value: string, days = 365) {
+  const exp = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${exp}; path=/; SameSite=Lax`;
+}
+function getOrCreateVoterUuid(): string {
+  let id = getCookie("nu_voter_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    setCookie("nu_voter_id", id);
+  }
+  return id;
+}
+
 // ── Design constants ───────────────────────────────────────────────────────
 const DW = 480;
 const DH = 679;
@@ -1302,23 +1320,50 @@ function PageFooter() {
 }
 
 // ── Battle vote overlay page ───────────────────────────────────────────────
+type SubmitResult =
+  | { ok: true }
+  | { warning: "name_mismatch"; existing_name: string }
+  | { error: string };
+
 function BattleVotePage({
   battleKey,
   voteState,
+  voterName,
+  onVoterNameChange,
   onSelect,
-  onConfirm,
+  onSubmit,
   onChangeVote,
   onBack,
 }: {
   battleKey: BattleKey;
   voteState: { selected: number | null; confirmed: boolean };
+  voterName: string;
+  onVoterNameChange: (v: string) => void;
   onSelect: (i: number) => void;
-  onConfirm: () => void;
+  onSubmit: (force?: boolean) => Promise<SubmitResult>;
   onChangeVote: () => void;
   onBack: () => void;
 }) {
   const battle = BATTLES[battleKey];
   const { selected, confirmed } = voteState;
+
+  const [submitting, setSubmitting] = useState(false);
+  const [nameError, setNameError] = useState(false);
+  const [mismatch, setMismatch] = useState<string | null>(null); // existing_name
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleConfirmClick = async (force?: boolean) => {
+    if (!voterName.trim()) { setNameError(true); return; }
+    setNameError(false);
+    setMismatch(null);
+    setSubmitError(null);
+    setSubmitting(true);
+    const result = await onSubmit(force);
+    setSubmitting(false);
+    if ("ok" in result) return;
+    if ("warning" in result) { setMismatch(result.existing_name); return; }
+    setSubmitError(result.error);
+  };
 
   return (
     <div
@@ -1461,6 +1506,40 @@ function BattleVotePage({
           </div>
         </div>
 
+        {/* Voter Name input */}
+        <div style={{ marginBottom: 24, flexShrink: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.35em", color: "rgba(109,228,245,0.45)", textTransform: "uppercase", marginBottom: 8 }}>
+            Voter Name
+          </div>
+          <input
+            type="text"
+            value={voterName}
+            onChange={(e) => { onVoterNameChange(e.target.value); setNameError(false); }}
+            placeholder="Enter your name"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              background: "rgba(109,228,245,0.04)",
+              border: `0.5px solid ${nameError ? "rgba(255,100,100,0.7)" : "rgba(109,228,245,0.2)"}`,
+              borderRadius: 2,
+              padding: "12px 14px",
+              fontFamily: MONO,
+              fontSize: 12,
+              letterSpacing: "0.08em",
+              color: FG,
+              outline: "none",
+              caretColor: CYAN,
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = nameError ? "rgba(255,100,100,0.7)" : "rgba(109,228,245,0.55)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = nameError ? "rgba(255,100,100,0.7)" : "rgba(109,228,245,0.2)"; }}
+          />
+          {nameError && (
+            <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(255,100,100,0.8)", textTransform: "uppercase" }}>
+              Name is required
+            </div>
+          )}
+        </div>
+
         {/* Battler options */}
         <div
           style={{
@@ -1532,16 +1611,43 @@ function BattleVotePage({
             flexShrink: 0,
           }}
         >
-          {!confirmed && selected !== null && (
+          {/* Name-mismatch warning */}
+          {mismatch && (
+            <div style={{ marginBottom: 12, padding: "10px 14px", border: "0.5px solid rgba(255,180,50,0.4)", borderRadius: 2, background: "rgba(255,180,50,0.05)" }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(255,180,50,0.9)", textTransform: "uppercase", marginBottom: 6 }}>
+                Already voted as &ldquo;{mismatch}&rdquo;
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: "rgba(214,230,242,0.5)", marginBottom: 10 }}>
+                Overwrite with &ldquo;{voterName.trim()}&rdquo;?
+              </div>
+              <button
+                onClick={() => handleConfirmClick(true)}
+                disabled={submitting}
+                style={{ background: "rgba(255,180,50,0.15)", border: "0.5px solid rgba(255,180,50,0.4)", borderRadius: 2, padding: "8px 14px", cursor: "pointer", fontFamily: MONO, fontSize: 9, letterSpacing: "0.25em", color: "rgba(255,180,50,0.9)", textTransform: "uppercase", WebkitTapHighlightColor: "transparent" }}
+              >
+                Overwrite
+              </button>
+            </div>
+          )}
+
+          {/* Server error */}
+          {submitError && (
+            <div style={{ marginBottom: 12, fontFamily: MONO, fontSize: 9, letterSpacing: "0.2em", color: "rgba(255,100,100,0.8)", textTransform: "uppercase" }}>
+              {submitError}
+            </div>
+          )}
+
+          {!confirmed && selected !== null && !mismatch && (
             <button
-              onClick={onConfirm}
+              onClick={() => handleConfirmClick()}
+              disabled={submitting}
               style={{
                 width: "100%",
-                background: CYAN,
+                background: submitting ? "rgba(109,228,245,0.5)" : CYAN,
                 border: "none",
                 borderRadius: 2,
                 padding: "13px 16px",
-                cursor: "pointer",
+                cursor: submitting ? "default" : "pointer",
                 fontFamily: MONO,
                 fontSize: 10,
                 letterSpacing: "0.3em",
@@ -1549,9 +1655,10 @@ function BattleVotePage({
                 textTransform: "uppercase",
                 fontWeight: 600,
                 WebkitTapHighlightColor: "transparent",
+                transition: "background 0.2s",
               }}
             >
-              Confirm Vote
+              {submitting ? "Sending..." : "Confirm Vote"}
             </button>
           )}
           {confirmed && (
@@ -1916,6 +2023,11 @@ export default function App() {
     return (p === "breakin" || p === "allgenre" || p === "final") ? p : null;
   });
 
+  const [voterUuid] = useState(() => getOrCreateVoterUuid());
+  const [voterName, setVoterName] = useState(
+  () => getCookie("nu_voter_name") ?? ""
+);
+
   const openBattle = (key: BattleKey | null) => {
     setActiveBattle(key);
     const url = new URL(window.location.href);
@@ -1949,6 +2061,36 @@ export default function App() {
       ...s,
       [key]: { ...s[key], confirmed: false },
     }));
+
+  //バトルで確定ボタンが押されたとき
+  const handleSubmit = async (key: BattleKey, force?: boolean): Promise<SubmitResult> => {
+    const battlerName = BATTLES[key].battlers[voteStates[key].selected!];
+    try {
+      const res = await fetch("/api/votes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          voter_uuid: voterUuid,
+          voter_name: voterName.trim(),
+          battle_key: key,
+          battler: battlerName,
+          force: force ?? false,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+  　　　　setCookie("nu_voter_name", voterName.trim());
+        handleConfirm(key);
+        return { ok: true };
+      }
+      if (res.status === 409 && json.warning === "name_mismatch") {
+        return { warning: "name_mismatch", existing_name: json.existing_name };
+      }
+      return { error: json.error ?? "Server error" };
+    } catch {
+      return { error: "Network error" };
+    }
+  };
 
   useEffect(() => {
     const observers = sectionRefs.current.map((el, i) => {
@@ -2076,8 +2218,10 @@ export default function App() {
           <BattleVotePage
             battleKey={activeBattle}
             voteState={voteStates[activeBattle]}
+            voterName={voterName}
+            onVoterNameChange={setVoterName}
             onSelect={(i) => handleSelect(activeBattle, i)}
-            onConfirm={() => handleConfirm(activeBattle)}
+            onSubmit={(force) => handleSubmit(activeBattle, force)}
             onChangeVote={() => handleChangeVote(activeBattle)}
             onBack={() => openBattle(null)}
           />
