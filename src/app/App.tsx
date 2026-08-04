@@ -2008,7 +2008,7 @@ export default function App() {
   // URLによるルーティング (検索結果用)
   const path = window.location.pathname;
 
-  if (path === "/voteResults") {
+  if (path === "/VoteResults") {
     return <VoteResults />;
   }
 //メインページ 
