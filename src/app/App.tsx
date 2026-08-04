@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
+import VoteResults from "../pages/VoteResults";
 
 // ── Cookie helpers ─────────────────────────────────────────────────────────
 function getCookie(name: string): string | null {
@@ -2004,6 +2005,13 @@ const Page4 = memo(function Page4({
 
 // ── Root ───────────────────────────────────────────────────────────────────
 export default function App() {
+  // URLによるルーティング (検索結果用)
+  const path = window.location.pathname;
+
+  if (path === "/voteResults") {
+    return <VoteResults />;
+  }
+//メインページ 
   useEffect(() => {
     document.documentElement.lang = "ja";
   }, []);
@@ -2079,7 +2087,7 @@ export default function App() {
       });
       const json = await res.json();
       if (res.ok) {
-  　　　　setCookie("nu_voter_name", voterName.trim());
+        setCookie("nu_voter_name", voterName.trim());
         handleConfirm(key);
         return { ok: true };
       }

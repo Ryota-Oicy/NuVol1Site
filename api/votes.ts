@@ -5,11 +5,13 @@ const supabase = createClient(
   process.env.SUPABASE_SECRET_KEY!,
 );
 
+// GET - SELECT
 export async function GET() {
   const { data, error } = await supabase.from("votes").select("*");
   return Response.json({ success: !error, error: error?.message, data });
 }
 
+// POST - UPSERT
 export async function POST(req: Request) {
   const body = await req.json();
   const { voter_uuid, voter_name, battle_key, battler, force } = body as {
