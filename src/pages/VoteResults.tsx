@@ -8,12 +8,15 @@ type Vote = {
   created_at: string;
 };
 
+
+
 export default function VoteResults() {
 
   const [votes, setVotes] = useState<Vote[]>([]);
-
+  const battleKey = window.location.pathname.split("/")[2];
+  
   useEffect(() => {
-    fetch("/api/vote-results")
+    fetch(`/api/vote-results?battle_key=${battleKey}`)
       .then(res => res.json())
       .then(data => {
         setVotes(data);
