@@ -9,7 +9,7 @@ const supabase = createClient(
 //エラーがない場合、GROUP BYの結果を返す
 export default async function handler(req, res) {
 
-  const battleKey = req.query.battle_key as string;
+  const battleKey = req.query.battle as string;
 
   if (!battleKey) {
     return res.status(400).json({
