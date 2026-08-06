@@ -6,7 +6,7 @@ type VoteResult = {
 };
 
 export default function VoteResults() {
-  const [votes, setVotes] = useState<Vote[]>([]);
+  const [votes, setVotes] = useState<VoteResult[]>([]);
   const battleKey = new URLSearchParams(
     window.location.search,
   ).get("battle");
@@ -18,7 +18,8 @@ export default function VoteResults() {
         setVotes(data);
       });
   }, []);
-
+  const ranking = [...votes].sort((a, b) => b.count - a.count);
+  
   return (
     <div
       style={{
