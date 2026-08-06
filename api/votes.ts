@@ -1,3 +1,4 @@
+//データ格納用API (POST)
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -6,10 +7,10 @@ const supabase = createClient(
 );
 
 // GET - SELECT
-export async function GET() {
-  const { data, error } = await supabase.from("votes").select("*");
-  return Response.json({ success: !error, error: error?.message, data });
-}
+//export async function GET() {
+//  const { data, error } = await supabase.from("votes").select("*");
+//  return Response.json({ success: !error, error: error?.message, data });
+//}
 
 // POST - UPSERT
 export async function POST(req: Request) {

@@ -1,39 +1,34 @@
 import { useEffect, useState } from "react";
 
-type Vote = {
-  id: number;
-  battle_key: string;
-  voter_name: string;
+type VoteResult = {
   battler: string;
-  created_at: string;
+  count: number;
 };
 
-
-
 export default function VoteResults() {
-
   const [votes, setVotes] = useState<Vote[]>([]);
-  const battleKey = window.location.pathname.split("/")[2];
-  
+  const battleKey = new URLSearchParams(
+    window.location.search,
+  ).get("battle");
+
   useEffect(() => {
-    fetch(`/api/vote-results?battle_key=${battleKey}`)
-      .then(res => res.json())
-      .then(data => {
+    fetch(`/api/vote-results?battle=${battleKey}`)
+      .then((res) => res.json())
+      .then((data) => {
         setVotes(data);
       });
   }, []);
-
 
   return (
     <div>
       <h1>Vote Results</h1>
 
       {votes.map((vote) => (
-        <div key={vote.id}>
-          {vote.battler}
+        <div key={vote.battler}>
+          {vote.battler}: {vote.count}票
         </div>
       ))}
-
+      
     </div>
   );
 }
