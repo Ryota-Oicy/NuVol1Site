@@ -197,19 +197,19 @@ const NOTES_LIST = [
   },
   {
     label: "FOOD & DRINK",
-    body: "ワンドリンク用の缶以外、すべて無料！\nビールサーバーも無料！持ち込みOK！\n※においの強いものは持ち込み禁止",
+    body: "ワンドリンク用の缶以外、すべて無料！\nビールサーバーも無料！持ち込みOK！\n※においの強いものはお控えください",
+  },
+  {
+    label: "PROHIBITED ACRIONS",
+    body: "便器/洗面台/配管パイプ等を詰まらせる行為\n嘔吐による汚損\nクロスの破損\nエレベータシートの破損など\n上記すべて罰金が発生し、にいやんが破産します"
   },
   {
     label: "VELUE RULES",
-    body: "(会場注意事項記載予定)",
-  },
-  {
-    label: "AAAA",
-    body: "(AAAA)",
+    body: "ドアは必ず閉めて下さい\n喫煙所での会話は一切禁止です(今年も警察来たそうです)\nゴミは分別して下さい\n会場近辺でコンビや談笑をしないで下さい",
   },
   {
     label: "VENUE",
-    body: "Hundred 7 — Akihabara, Tokyo\n(住所記載予定)",
+    body: "Hundred 7\n東京都台東区浅草橋5-3-2 秋葉原スクエアビル７Ｆ",
   },
   {
     label: "CONTACT",
