@@ -48,12 +48,17 @@ export default async function handler(req, res) {
           count: 0,
         };
       }
-
       acc[vote.battler].count++;
-
       return acc;
     }, {}),
-  );
+  ) as { battler: string; count: number }[];
+
+  // 得票数の降順、同数の場合は名前の昇順で安定ソート
+  // → 同票が発生してもリロードごとに表示順がブレないようにする
+  grouped.sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.battler.localeCompare(b.battler, "ja");
+  });
 
   //成功時、バトラー・得票数の入ったjsonを返す
   return res.status(200).json(grouped);
